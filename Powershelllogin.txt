@@ -50,3 +50,5 @@ New-AzVM -Name MyVm -ResourceGroupName ExerciseResources -Credential (Get-Creden
 
 // define vm in a variable:
 $vm = Get-AzVM  -Name MyVM -ResourceGroupName ExerciseResources
+
+a
