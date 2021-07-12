@@ -1,0 +1,28 @@
+//10 most recently generated security events
+
+SecurityEvent
+    | take 10
+
+SecurityEvent
+    | top 10 by TimeGenerated
+
+//fetch records that are more than 30 minutes old, and that have a level of 10 or more.
+
+SecurityEvent
+    | where TimeGenerated < ago(30m)
+    | where toint(Level) >= 10
+
+
+//search the Events table for records from the Application event log for the last 24 hours.
+
+Event
+| where EventLog == "Application"
+| where TimeGenerated > ago(24h)
+
+
+//display the number of different computers that generated heartbeat events each week for the last three weeks. The results appear as a bar chart.
+
+Heartbeat
+    | where TimeGenerated >= startofweek(ago(21d))
+    | summarize dcount(Computer) by endofweek(TimeGenerated) | render barchart kind=default
+
