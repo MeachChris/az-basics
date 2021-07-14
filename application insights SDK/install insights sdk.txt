@@ -1,0 +1,62 @@
+//in bash,
+dotnet new mvc -o videowebapp
+
+cd videowebapp
+
+dotnet add package Microsoft.ApplicationInsights.AspNetCore
+
+//INITIALIZE:  (UseApplicationInsights method in Program.cs file)
+
+code .
+
+//In the file, you're using C#, call function looks like this:  services.AddApplicationInsightsTelemetry(); Needs to be added to ConfigureServices() function.
+
+// mvc web app; modify constructor TelemtryClient parameter and store value in the controllers methods:
+
+public class HomeController : Controller
+{
+    private TelemetryClient aiClient;
+
+    public HomeController(TelemetryClient aiClient)
+    {
+        this.aiClient = aiClient;
+    }
+}
+
+//track events
+this.aiClient.TrackEvent("CommentSubmitted");
+
+// Track an event with properties
+this.aiClient.TrackEvent("VideoUploaded", new Dictionary<string, string> {{"Category", "Sports"}, {"Format", "mp4"}});
+
+//track metrics
+
+this.aiClient.GetMetric("SimultaneousPlays").TrackValue(5);
+
+//track value
+Metric userResponse = this.aiClient.GetMetric("UserResponses", "Kind");
+
+userResponse.TrackValue(24, "Likes");
+userResponse.TrackValue(5, "Loves");
+
+//change back to webapp
+
+cd videowebapp
+code .
+
+//add to views/home/index.cshtml
+
+<div>
+    @using (Html.BeginForm("Like","Home"))
+    {
+        <input type="submit" value="Like" />
+        <div>@ViewBag.Message</div>
+    }  
+</div>
+
+[HttpPost]
+public ActionResult Like(string button)
+{
+    ViewBag.Message = "Thank you for your response";
+    return View("Index");
+}

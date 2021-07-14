@@ -1,0 +1,99 @@
+//Create an instance of Azure Key Vault to store your company's private data. Every Azure Key Vault name needs to be globally unique.
+
+export VMNAME=prodserver
+export KVNAME=furniture-secrets$RANDOM
+
+az keyvault create --name $KVNAME \
+    --resource-group learn-583e3413-012c-4405-bddc-fa82511ba883 \
+    --default-action Allow \
+    --location $(az resource list --output tsv --query [0].location) \
+    --sku standard
+
+    //create vm to host app, store public ip in environment variable;
+
+    export publicIP=$(az vm create \
+    --name $VMNAME \
+    --resource-group learn-583e3413-012c-4405-bddc-fa82511ba883 \
+    --image UbuntuLTS \
+    --generate-ssh-keys \
+    --output tsv \
+    --query "publicIpAddress")
+
+    // set up environment (Create instance of az key vault to store private data)
+
+    export VMNAME=prodserver
+export KVNAME=furniture-secrets$RANDOM
+
+az keyvault create --name $KVNAME \
+    --resource-group learn-583e3413-012c-4405-bddc-fa82511ba883 \
+    --default-action Allow \
+    --location $(az resource list --output tsv --query [0].location) \
+    --sku standard
+
+//assign system-assigned managed ID to the VM
+
+az vm identity assign \
+  --name $VMNAME \
+  --resource-group learn-583e3413-012c-4405-bddc-fa82511ba883
+
+//use key vault to store secret, add connection string to key vault
+
+az keyvault secret set \
+  --vault-name $KVNAME \
+  --name DBCredentials \
+  --value "Server=tcp:prodserverSQL.database.windows.net,1433;Database=myDataBase;User ID=mylogin@myserver;Password=examplePassword;Trusted_Connection=False;Encrypt=True;"
+
+//Note the key vault name
+echo $KVNAME
+
+// set up vm for app:
+//Use SSH to access your VM.
+ssh $publicIP
+
+//download and install the .NET Core version on the VM that will be used
+sudo snap install dotnet-sdk --classic --channel=3.1
+
+//download source code for module sample app
+git clone https://github.com/MicrosoftDocs/mslearn-authenticate-apps-with-managed-identities identity
+
+//end SSH session
+exit
+
+
+_____________________Create and manage a user-assigned identity______________________
+
+az identity create \
+  --name <identity name>
+  --resource-group <resource group>
+
+  az identity list \
+  --resource-group <resource group>
+
+//To use the identity with an Azure function app
+  az functionapp identity assign \
+  --name <function app name> \
+  --resource-group <resource group> \
+  --role <principal id>
+
+//to grant the identity the ability to read and list keys from Azure Key Vault, run the following command.
+  az keyvault set-policy \
+    --name <key vault name> \
+    --object-id <principal id> \
+    --secret-permissions get list
+
+//delete the identity
+    az identity delete \
+  --name <identity name>
+  --resource-group <resource group>
+
+
+  _______________________Use managed identity with Azure Key Vault________________
+//powershell
+  dotnet install Azure.Identity
+//C#
+  var client = new SecretClient(new Uri(keyVaultUrl), new DefaultAzureCredential());
+//C#
+  KeyVaultSecret secretWithValue = await client.GetSecretAsync(secret.Name).ConfigureAwait(false);
+
+
+
